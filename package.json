@@ -1,0 +1,166 @@
+{
+  "name": "vestigo",
+  "displayName": "Vestigo",
+  "description": "Persistent memory for your codebase — follow the footprints of every decision.",
+  "version": "0.1.0",
+  "publisher": "vestigo",
+  "private": true,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vestigo-extension/vestigo.git"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Machine Learning",
+    "Notebooks",
+    "Other"
+  ],
+  "keywords": [
+    "memory",
+    "knowledge",
+    "context",
+    "code navigation",
+    "git",
+    "pr",
+    "ai"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "vestigo.addNote",
+        "title": "Add note to current file",
+        "category": "Vestigo"
+      },
+      {
+        "command": "vestigo.findCode",
+        "title": "Find code that...",
+        "category": "Vestigo"
+      },
+      {
+        "command": "vestigo.showTimeline",
+        "title": "Show timeline",
+        "category": "Vestigo"
+      },
+      {
+        "command": "vestigo.refreshSidebar",
+        "title": "Refresh sidebar",
+        "category": "Vestigo"
+      },
+      {
+        "command": "vestigo.markOutdated",
+        "title": "Mark as outdated",
+        "category": "Vestigo"
+      },
+      {
+        "command": "vestigo.setGithubPat",
+        "title": "Set GitHub personal access token",
+        "category": "Vestigo"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "vestigo.addNote",
+        "key": "ctrl+shift+m",
+        "mac": "cmd+shift+m",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "vestigo.findCode",
+        "key": "ctrl+shift+f",
+        "mac": "cmd+shift+f",
+        "when": "editorTextFocus"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "vestigo",
+          "title": "Vestigo",
+          "icon": "$(bookmark)"
+        }
+      ]
+    },
+    "views": {
+      "vestigo": [
+        {
+          "type": "webview",
+          "id": "vestigo.memorySidebar",
+          "name": "Memory",
+          "contextualTitle": "Vestigo Memory"
+        }
+      ]
+    },
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "vestigo.showTimeline",
+          "when": "explorerResourceIsFile",
+          "group": "2_workspace@5"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "vestigo.refreshSidebar",
+          "when": "false"
+        },
+        {
+          "command": "vestigo.markOutdated",
+          "when": "false"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Vestigo",
+      "properties": {
+        "vestigo.github.remoteName": {
+          "type": "string",
+          "default": "origin",
+          "description": "Git remote to use for GitHub owner/repo detection."
+        },
+        "vestigo.harvest.maxPRs": {
+          "type": "number",
+          "default": 50,
+          "description": "Maximum number of closed PRs to harvest on each sync."
+        },
+        "vestigo.harvest.commitLookbackDays": {
+          "type": "number",
+          "default": 365,
+          "description": "Number of days of git history to scan for commit bodies."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build": "node esbuild.config.js --production",
+    "watch": "node esbuild.config.js",
+    "lint": "tsc --noEmit",
+    "test": "tsx test/unit/parsers.test.ts && tsx test/integration/database.test.ts && node test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/glob": "^8.1.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^20.11.0",
+    "@types/sql.js": "^1.4.11",
+    "@types/vscode": "^1.85.0",
+    "@vscode/test-electron": "^3.0.0",
+    "@vscode/vsce": "^3.9.2",
+    "esbuild": "^0.24.0",
+    "glob": "^13.0.6",
+    "mocha": "^11.7.6",
+    "tsx": "^4.23.0",
+    "typescript": "^5.7.0"
+  },
+  "dependencies": {
+    "simple-git": "^3.27.0",
+    "sql.js": "^1.14.1",
+    "uuid": "^11.0.0"
+  }
+}

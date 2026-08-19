@@ -1,0 +1,16 @@
+.vscode/**
+.vscode-test/**
+src/**
+test/**
+out/test/**
+node_modules/**
+!node_modules/sql.js/**
+esbuild.config.js
+package-lock.json
+tsconfig.json
+.gitignore
+.vestigo/**
+test-workspace/**
+.vscode-test/**
+*.log
+*.vsix

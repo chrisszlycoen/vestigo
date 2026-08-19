@@ -1,0 +1,8 @@
+out/
+node_modules/
+.vscode-test/
+*.vsix
+.vestigo/
+test-workspace/
+*.log
+.DS_Store

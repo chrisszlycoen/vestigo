@@ -3,9 +3,6 @@ const fs = require('fs');
 const { runTests } = require('@vscode/test-electron');
 
 function ensureTestWorkspace(workspacePath) {
-    if (fs.existsSync(workspacePath)) {
-        return;
-    }
     fs.mkdirSync(workspacePath, { recursive: true });
     const gitDir = path.join(workspacePath, '.git');
     if (!fs.existsSync(gitDir)) {
@@ -27,10 +24,12 @@ async function main() {
 
         ensureTestWorkspace(workspacePath);
 
+        const cachedEditor = path.join(extensionDevelopmentPath, '.vscode-test', 'vscode-linux-x64-1.127.0', 'code');
         await runTests({
+            ...(fs.existsSync(cachedEditor) ? { vscodeExecutablePath: cachedEditor } : {}),
             extensionDevelopmentPath,
             extensionTestsPath,
-            launchArgs: [workspacePath, '--disable-extensions'],
+            launchArgs: [workspacePath, '--disable-extensions', '--no-sandbox', '--disable-gpu', '--skip-welcome', '--skip-release-notes'],
         });
     } catch (err) {
         console.error('Failed to run tests', err);

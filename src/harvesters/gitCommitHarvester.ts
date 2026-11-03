@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import simpleGit from 'simple-git';
+import { simpleGit } from 'simple-git';
 import { getDatabase, getWorkspaceId } from '../db/database';
 import { createMemory, findMemoryBySource } from '../db/queries';
 import { log } from '../utils/logger';

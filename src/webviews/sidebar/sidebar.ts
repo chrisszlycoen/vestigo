@@ -1,3 +1,5 @@
+import type { compactMemory, getProjectBrief } from '../../memory/context';
+
 interface Memory {
     id: string;
     file_path: string;
@@ -16,9 +18,15 @@ interface UpdateMessage {
     type: 'update';
     filePath: string;
     memories: Memory[];
+    workMemories: ReturnType<typeof compactMemory>[];
+    total: number;
+    shown: number;
+    scope: 'project' | 'file';
+    project: Awaited<ReturnType<typeof getProjectBrief>>;
+    skippedRecords: number;
 }
 
-type WebviewMessage = UpdateMessage;
+type WebviewMessage = UpdateMessage | { type: 'error'; message: string };
 
 const vscode = acquireVsCodeApi();
 
@@ -54,7 +62,7 @@ function renderMemory(memory: Memory): string {
     const outdatedClass = memory.is_outdated ? 'memory-outdated' : '';
     const sourceLabel = renderSource(memory);
     const date = formatDate(memory.created_at);
-    const content = escapeHtml(memory.content).replace(/\n/g, '<br>');
+    const content = escapeHtml(memory.content);
 
     const sourceUrlButton =
         memory.source_url
@@ -79,36 +87,83 @@ function renderMemory(memory: Memory): string {
     `;
 }
 
-function render(memories: Memory[], filePath: string): void {
+function renderWork(memory: ReturnType<typeof compactMemory>): string {
+    const label = { work: 'Work checkpoint', decision: 'Decision', constraint: 'Important constraint', issue: 'Known issue' }[memory.kind];
+    const evidence = { unchanged: 'Files unchanged', changed: 'Files changed · check context', missing: 'File evidence missing', unavailable: 'Evidence not available' }[memory.evidenceState];
+    const check = memory.verification;
+    const verification = check ? `<div class="work-detail"><span class="detail-label">Check · agent-reported</span><span>${escapeHtml(check.status.replace('_', ' '))}${check.command ? ` · ${escapeHtml(check.command)}` : ''}${check.detail ? ` — ${escapeHtml(check.detail)}` : ''}</span></div>` : '';
+    return `<article class="memory-card work-card">
+        <div class="memory-header"><span class="memory-source">${label}</span><span class="memory-date">${escapeHtml(formatDate(memory.capturedAt))}</span></div>
+        <h2 class="work-summary">${escapeHtml(memory.summary)}</h2>
+        ${memory.reason ? `<div class="work-detail"><span class="detail-label">Why</span><span>${escapeHtml(memory.reason)}</span></div>` : ''}
+        ${verification}
+        ${memory.next ? `<div class="next-step"><span class="detail-label">Next step</span><span>${escapeHtml(memory.next)}</span></div>` : ''}
+        ${memory.files.length ? `<div class="file-references">${memory.files.map((file) => `<span>${escapeHtml(file)}</span>`).join('')}</div>` : ''}
+        <div class="evidence-state ${memory.evidenceState === 'changed' || memory.evidenceState === 'missing' ? 'needs-check' : ''}">${evidence} · ${memory.visibility === 'private' ? 'Private' : 'Project'}${memory.dirty ? ' · Uncommitted changes at capture' : ''}</div>
+    </article>`;
+}
+
+function render(message: UpdateMessage): void {
+    const { memories, filePath, workMemories, project, scope } = message;
     const container = document.getElementById('memories-container');
     const fileLabel = document.getElementById('file-label');
     if (!container || !fileLabel) {
         return;
     }
 
-    fileLabel.textContent = filePath || 'No file open';
+    fileLabel.textContent = scope === 'file' ? filePath || 'Open a file to see its context' : 'Decisions, progress & what comes next';
+    const name = document.getElementById('project-name');
+    const description = document.getElementById('project-description');
+    const count = document.getElementById('memory-count');
+    const status = document.getElementById('context-status');
+    if (name) { name.textContent = project.name; }
+    if (description) { description.textContent = project.description; }
+    if (count) { count.textContent = `${message.total} checkpoint${message.total === 1 ? '' : 's'}`; }
+    if (status) {
+        status.textContent = message.skippedRecords ? `${message.skippedRecords} unreadable record(s)`
+            : project.portableContext === 'different_revision' ? 'Shared context · check revision'
+            : project.portableContext === 'same_revision' ? 'Shared context loaded' : 'Local memory';
+    }
+    for (const tab of ['project', 'file']) {
+        const button = document.getElementById(`${tab}-tab`);
+        button?.classList.toggle('active', scope === tab);
+        button?.setAttribute('aria-pressed', String(scope === tab));
+    }
 
-    if (memories.length === 0) {
+    if (memories.length === 0 && workMemories.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                No memories yet. Vestigo will capture reasoning from your PRs and commits
-                automatically as they are added.
+                <strong>${scope === 'file' ? 'No context for this file yet.' : 'Your next session starts here.'}</strong>
+                <p>${scope === 'file' ? 'Relevant checkpoints and imported history will appear here.' : 'Connect your AI to save progress and decisions as you build. Or save your first checkpoint below.'}</p>
             </div>
         `;
         return;
     }
 
-    container.innerHTML = memories.map(renderMemory).join('');
+    container.innerHTML = workMemories.map(renderWork).join('')
+        + (memories.length ? '<div class="section-label">Imported history & notes</div>' + memories.map(renderMemory).join('') : '')
+        + (message.shown >= 12 ? '<p class="list-note">Showing the latest 12 checkpoints. Your AI can search earlier context.</p>' : '');
 }
 
 function handleMessage(event: MessageEvent<WebviewMessage>): void {
     const message = event.data;
     if (message.type === 'update') {
-        render(message.memories, message.filePath);
+        render(message);
+    } else if (message.type === 'error') {
+        const container = document.getElementById('memories-container');
+        if (container) { container.textContent = message.message; }
     }
 }
 
 function attachListeners(): void {
+    const commands: Record<string, string> = { 'copy-context': 'copyContext', 'connect-agent': 'connectAgent',
+        'record-work': 'recordWork', 'export-context': 'exportContext' };
+    for (const [id, command] of Object.entries(commands)) {
+        document.getElementById(id)?.addEventListener('click', () => vscode.postMessage({ command }));
+    }
+    for (const scope of ['project', 'file']) {
+        document.getElementById(`${scope}-tab`)?.addEventListener('click', () => vscode.postMessage({ command: 'scope', scope }));
+    }
     const container = document.getElementById('memories-container');
     if (!container) {
         return;
@@ -160,7 +215,12 @@ function attachListeners(): void {
 }
 
 window.addEventListener('message', handleMessage);
-document.addEventListener('DOMContentLoaded', attachListeners);
+function start(): void {
+    attachListeners();
+    vscode.postMessage({ command: 'ready' });
+}
+if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', start); }
+else { start(); }
 
 export {};
 

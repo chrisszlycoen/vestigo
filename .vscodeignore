@@ -6,6 +6,7 @@ out/test/**
 node_modules/**
 !node_modules/sql.js/**
 esbuild.config.js
+docs/**
 package-lock.json
 tsconfig.json
 .gitignore

@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import simpleGit, { SimpleGit } from 'simple-git';
+import { simpleGit, SimpleGit } from 'simple-git';
 import * as vscode from 'vscode';
 import { getDatabase, getWorkspaceId, initializeDatabase } from '../db/database';
 import { setWorkspaceSettings } from '../db/queries';

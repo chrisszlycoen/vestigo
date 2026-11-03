@@ -3,12 +3,17 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { getDatabase, getWorkspaceId, getWorkspaceRoot } from '../db/database';
 import { getMemoriesForFile, markMemoryOutdated, updateMemoryContent } from '../db/queries';
-import { relativeToWorkspace } from '../utils/pathUtils';
+import { isInsideWorkspace, relativeToWorkspace } from '../utils/pathUtils';
 import { log } from '../utils/logger';
+import { MemoryStore } from '../memory/store';
+import { compactMemory, getProjectBrief } from '../memory/context';
 
 export class MemorySidebarProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'vestigo.memorySidebar';
     private _view?: vscode.WebviewView;
+    private _refreshId = 0;
+    private _scope: 'project' | 'file' = 'project';
+    private _brief?: { root: string; time: number; value: Awaited<ReturnType<typeof getProjectBrief>> };
 
     constructor(private readonly _extensionUri: vscode.Uri) {}
 
@@ -24,17 +29,41 @@ export class MemorySidebarProvider implements vscode.WebviewViewProvider {
         };
         webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
 
-        webviewView.webview.onDidReceiveMessage(async (message) => {
-            switch (message.command) {
+        webviewView.onDidDispose(() => { this._view = undefined; });
+        webviewView.webview.onDidReceiveMessage(async (message: unknown) => {
+            if (!message || typeof message !== 'object' || !('command' in message)) { return; }
+            const data = message as Record<string, unknown>;
+            switch (data.command) {
+                case 'ready':
+                    void this.refresh();
+                    break;
+                case 'scope':
+                    this._scope = data.scope === 'file' ? 'file' : 'project';
+                    void this.refresh();
+                    break;
+                case 'copyContext':
+                case 'recordWork':
+                case 'connectAgent':
+                case 'exportContext': {
+                    const commands: Record<string, string> = { copyContext: 'vestigo.copyProjectContext',
+                        recordWork: 'vestigo.recordWork', connectAgent: 'vestigo.connectAgent',
+                        exportContext: 'vestigo.exportProjectContext' };
+                    await vscode.commands.executeCommand(commands[String(data.command)]);
+                    break;
+                }
                 case 'editMemory':
-                    await this._handleEditMemory(message.id, message.content);
+                    if (typeof data.id === 'string' && typeof data.content === 'string' && data.content.length <= 10000) {
+                        await this._handleEditMemory(data.id, data.content);
+                    }
                     break;
                 case 'markOutdated':
-                    await this._handleMarkOutdated(message.id, message.outdated);
+                    if (typeof data.id === 'string' && typeof data.outdated === 'boolean') {
+                        await this._handleMarkOutdated(data.id, data.outdated);
+                    }
                     break;
                 case 'openUrl':
-                    if (message.url) {
-                        vscode.env.openExternal(vscode.Uri.parse(message.url));
+                    if (typeof data.url === 'string' && /^https?:\/\//i.test(data.url)) {
+                        void vscode.env.openExternal(vscode.Uri.parse(data.url));
                     }
                     break;
             }
@@ -43,16 +72,39 @@ export class MemorySidebarProvider implements vscode.WebviewViewProvider {
         this.refresh();
     }
 
-    refresh(): void {
+    async refresh(): Promise<void> {
         if (!this._view) {
             return;
         }
+        const refreshId = ++this._refreshId;
         const { filePath, memories } = this._getCurrentFileMemories();
-        this._view.webview.postMessage({
-            type: 'update',
-            filePath,
-            memories,
-        });
+        const root = getWorkspaceRoot();
+        if (!root) { return; }
+        try {
+            const store = new MemoryStore(root);
+            const all = store.list();
+            const skippedRecords = store.readIssues;
+            const selected = all.filter((memory) => this._scope === 'project' || memory.input.files.includes(filePath)).slice(0, 12);
+            const workMemories = selected.map((memory) => compactMemory(store.inspect(memory)));
+            if (!this._brief || this._brief.root !== root || Date.now() - this._brief.time > 5000) {
+                this._brief = { root, time: Date.now(), value: await getProjectBrief(store) };
+            }
+            if (refreshId !== this._refreshId || !this._view) { return; }
+            void this._view.webview.postMessage({
+                type: 'update',
+                filePath,
+                memories: this._scope === 'file' ? memories : [],
+                workMemories,
+                total: all.length,
+                shown: selected.length,
+                scope: this._scope,
+                project: this._brief.value,
+                skippedRecords,
+            });
+        } catch (err) {
+            log(`Failed to load project memory: ${err instanceof Error ? err.message : String(err)}`);
+            void this._view?.webview.postMessage({ type: 'error', message: 'Could not load project memory. Check the Vestigo output for details.' });
+        }
     }
 
     private _getCurrentFileMemories(): { filePath: string; memories: ReturnType<typeof getMemoriesForFile> } {
@@ -63,7 +115,7 @@ export class MemorySidebarProvider implements vscode.WebviewViewProvider {
         }
 
         const editor = vscode.window.activeTextEditor;
-        if (!editor) {
+        if (!editor || editor.document.uri.scheme !== 'file' || !isInsideWorkspace(editor.document.uri.fsPath, workspaceRoot)) {
             return { filePath: '', memories: [] };
         }
 
@@ -130,12 +182,33 @@ export class MemorySidebarProvider implements vscode.WebviewViewProvider {
 </head>
 <body>
     <div id="app">
+        <header class="project-header">
+            <div class="eyebrow">YOUR PROJECT, REMEMBERED</div>
+            <h1 id="project-name">Vestigo</h1>
+            <p id="project-description">Pick up where you left off.</p>
+            <div class="primary-actions">
+                <button id="copy-context" class="primary-button">Copy context for AI</button>
+                <button id="connect-agent" class="secondary-button">Connect AI</button>
+            </div>
+        </header>
+        <section class="context-health" aria-label="Context status">
+            <span id="memory-count">0 memories</span><span id="context-status">Local memory</span>
+        </section>
+        <nav class="scope-tabs" aria-label="Memory scope">
+            <button id="project-tab" class="scope-tab active" aria-pressed="true">Recent work</button>
+            <button id="file-tab" class="scope-tab" aria-pressed="false">This file</button>
+        </nav>
         <div id="file-header">
             <div id="file-label">No file open</div>
         </div>
         <div id="memories-container">
             <div class="empty-state">Loading memories...</div>
         </div>
+        <footer class="memory-footer">
+            <button id="record-work" class="action-button">Save a checkpoint</button>
+            <button id="export-context" class="action-button">Export project memory</button>
+            <p>No extra AI calls to store or retrieve memory.</p>
+        </footer>
     </div>
     <script nonce="${nonce}" src="${scriptUri}"></script>
 </body>

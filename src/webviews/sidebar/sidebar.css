@@ -22,6 +22,33 @@ body {
     height: 100vh;
 }
 
+button { font-family: inherit; }
+button:focus-visible { outline: 1px solid var(--vscode-focusBorder); outline-offset: 3px; }
+.project-header { padding: 22px 16px 18px; }
+.eyebrow { color: var(--vestigo-muted); font-size: 9px; letter-spacing: 1.4px; font-weight: 600; }
+.project-header h1 { font-size: 23px; font-weight: 600; margin: 9px 0 8px; letter-spacing: -0.6px; overflow-wrap: anywhere; }
+.project-header p { color: var(--vestigo-muted); line-height: 1.55; margin: 0 0 17px; font-size: 12px; }
+.primary-actions { display: flex; flex-wrap: wrap; gap: 7px; }
+.primary-button, .secondary-button { border-radius: 4px; padding: 8px 11px; font-size: 11px; cursor: pointer; }
+.primary-button { border: 1px solid transparent; background: var(--vscode-button-background); color: var(--vscode-button-foreground); }
+.primary-button:hover { background: var(--vscode-button-hoverBackground); }
+.secondary-button { border: 1px solid var(--vestigo-border); background: transparent; color: var(--vestigo-fg); }
+.context-health { border-top: 1px solid var(--vestigo-border); border-bottom: 1px solid var(--vestigo-border); padding: 10px 16px; display: flex; gap: 8px; justify-content: space-between; flex-wrap: wrap; color: var(--vestigo-muted); font-size: 10px; }
+.scope-tabs { display: flex; gap: 18px; padding: 0 16px; }
+.scope-tab { background: transparent; border: 0; border-bottom: 2px solid transparent; color: var(--vestigo-muted); padding: 13px 0 10px; cursor: pointer; font-size: 12px; }
+.scope-tab.active { color: var(--vestigo-fg); border-bottom-color: var(--vestigo-accent); }
+.work-summary { margin: 12px 0; font-size: 13px; font-weight: 600; line-height: 1.5; overflow-wrap: anywhere; }
+.work-detail, .next-step { display: flex; flex-direction: column; gap: 4px; font-size: 11px; line-height: 1.6; margin: 10px 0; overflow-wrap: anywhere; }
+.detail-label { font-size: 9px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; color: var(--vestigo-muted); }
+.next-step { border-left: 2px solid var(--vestigo-accent); padding-left: 10px; margin: 14px 0; }
+.file-references { display: flex; flex-wrap: wrap; gap: 5px; margin: 12px 0; }
+.file-references span { font-family: var(--vscode-editor-font-family); color: var(--vestigo-muted); font-size: 10px; background: var(--vscode-textCodeBlock-background); padding: 3px 5px; border-radius: 3px; overflow-wrap: anywhere; }
+.evidence-state { font-size: 10px; color: var(--vestigo-muted); padding-top: 10px; border-top: 1px solid var(--vestigo-border); }
+.needs-check { color: var(--vscode-editorWarning-foreground); }
+.memory-footer { border-top: 1px solid var(--vestigo-border); padding: 12px 16px; }
+.memory-footer p, .list-note { font-size: 10px; line-height: 1.5; color: var(--vestigo-muted); margin: 10px 0 0; }
+.section-label { font-size: 10px; color: var(--vestigo-muted); margin: 16px 0 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+
 #file-header {
     padding: 12px 16px;
     border-bottom: 1px solid var(--vestigo-border);
@@ -29,7 +56,8 @@ body {
 }
 
 #file-label {
-    font-weight: 600;
+    font-size: 10px;
+    color: var(--vestigo-muted);
     word-break: break-all;
 }
 
@@ -42,9 +70,10 @@ body {
 .empty-state {
     padding: 16px;
     color: var(--vestigo-muted);
-    font-style: italic;
     line-height: 1.5;
 }
+.empty-state strong { color: var(--vestigo-fg); font-size: 13px; }
+.empty-state p { margin-bottom: 0; }
 
 .memory-card {
     border: 1px solid var(--vestigo-border);

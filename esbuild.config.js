@@ -38,32 +38,46 @@ function copyMigrations() {
 }
 
 /** @type {import('esbuild').BuildOptions} */
-const options = {
-    entryPoints: [
-        path.join(__dirname, 'src', 'extension.ts'),
-        path.join(__dirname, 'src', 'webviews', 'sidebar', 'sidebar.ts'),
-        path.join(__dirname, 'src', 'webviews', 'search', 'search.ts'),
-    ],
+const common = {
     bundle: true,
     outdir: path.join(__dirname, 'out'),
-    external: ['vscode', 'sql.js'],
-    format: 'cjs',
-    platform: 'node',
+    outbase: path.join(__dirname, 'src'),
     target: 'es2022',
     sourcemap: !production,
     minify: production,
     logLevel: 'info',
 };
 
+const builds = [
+    {
+        ...common,
+        entryPoints: ['src/extension.ts', 'src/agent/server.ts'],
+        external: ['vscode', 'sql.js'],
+        format: 'cjs',
+        platform: 'node',
+    },
+    {
+        ...common,
+        entryPoints: ['src/webviews/sidebar/sidebar.ts', 'src/webviews/search/search.ts'],
+        format: 'iife',
+        platform: 'browser',
+    },
+];
+
 async function run() {
     if (production) {
-        await esbuild.build(options);
+        await Promise.all(builds.map((options) => esbuild.build(options)));
     } else {
-        const ctx = await esbuild.context(options);
-        await ctx.watch();
+        const contexts = await Promise.all(builds.map((options) => esbuild.context(options)));
+        await Promise.all(contexts.map((ctx) => ctx.watch()));
     }
     copyCssFiles();
     copyMigrations();
+    if (!production) {
+        fs.watch(path.join(__dirname, 'src', 'webviews', 'sidebar'), (_event, file) => {
+            if (file?.endsWith('.css')) { copyCssFiles(); }
+        });
+    }
 }
 
 run().catch((err) => {

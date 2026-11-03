@@ -1,6 +1,6 @@
 # Vestigo: Google Flow motion kit
 
-Six production prompts for the Vestigo landing page. The website currently uses code-driven motion and a generated reference image; no Google Flow video has been generated or charged through this project.
+Six production prompts for the Vestigo landing page. The website includes coordinated code-driven motion, a generated reference image, and an original eight-second procedural film rendered locally with Pillow and FFmpeg. The film is not Google Flow footage; no Google Flow generation has been charged through this project.
 
 ## Visual system
 
@@ -78,3 +78,7 @@ Vertical 9:16 cinematic product teaser. Use the supplied Vestigo sculpture as th
 - [Edit clips and build scenes](https://support.google.com/flow/answer/16935718?hl=en)
 
 Research checked on 2026-11-03. Product settings can change.
+
+## Recommended cinematic sequence
+
+Use prompt 02 for the opening connection, prompt 03 for context recovery, and prompt 01 for the final continuous loop. Keep typography and product UI in HTML rather than baking them into footage. The current page already provides a small original film at `media/memory-thread.mp4`; replace or extend it only after reviewing the generated clips.

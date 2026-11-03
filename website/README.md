@@ -17,7 +17,9 @@ Open http://127.0.0.1:3210. Use a different free port if necessary.
 ## Experience
 
 - Original orange-ribbon memory sculpture and matching SVG brand mark.
-- Responsive product narrative, bounded decorative motion, and scroll reveals.
+- Coordinated headline entrances, a scroll-drawn orange thread, and responsive motion.
+- An original eight-second, 30 fps H.264 motion film (about 0.8 MB), rendered locally.
+- An autoplaying, pauseable three-scene task handoff; manual interaction stops auto-advance.
 - Three interactive, explicitly illustrative VS Code scenarios.
 - Working keyword search over example memories and keyboard-accessible scenario tabs.
 - Installation dialog with a copyable build command; no fabricated marketplace URL.
@@ -34,7 +36,11 @@ Read [the full prompt kit](dist/flow-prompts.md). It includes six prompts, refer
 image guidance, video export recommendations, and links to official Google help.
 The reference image is [memory-sculpture.png](dist/assets/memory-sculpture.png).
 
-No Flow clips have been generated. To add a hero clip, place the selected MP4 at
+The cinematic section uses an original procedural film, not a Google Flow generation.
+The source renderer is `tools/render_memory_film.py` (Pillow and FFmpeg required).
+Video and the walkthrough pause offscreen, in background tabs, and when motion is paused.
+Reduced-motion and data-saving visitors get still artwork until explicitly choosing playback.
+No Flow clips have been generated. To add an alternate hero clip, place the selected MP4 at
 `dist/media/hero-loop.mp4` and set `dist/media/manifest.json` to:
 
 ```json

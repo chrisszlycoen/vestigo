@@ -226,8 +226,7 @@ function updateMotion() {
   $('.motion-toggle').setAttribute('aria-label', motionPaused ? 'Resume decorative motion' : 'Pause decorative motion');
   $('.motion-toggle-label').textContent = motionPaused ? 'Resume motion' : 'Pause motion';
   $('.motion-toggle>span:first-child').textContent = motionPaused ? '▷' : 'Ⅱ';
-  $$('video').forEach((video) => { if (motionPaused) { video.pause(); } });
-  document.dispatchEvent(new CustomEvent('vestigo:motionchange'));
+  $$('video').forEach((video) => { if (motionPaused) { video.pause(); } else if (video.dataset.loaded) { void video.play().catch(() => {}); } });
   try { localStorage.setItem('vestigo-motion-paused', String(motionPaused)); } catch { /* Storage may be disabled. */ }
 }
 try { motionPaused = reducedMotion.matches || localStorage.getItem('vestigo-motion-paused') === 'true'; } catch { /* Respect the system setting. */ }

@@ -147,3 +147,17 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# Vestigo local runtime and packages
+out/
+node_modules/
+.vscode-test/
+*.vsix
+.vestigo/
+test-workspace/
+*.log
+.DS_Store
+
+# Authored static website source (no framework build)
+!website/dist/
+!website/dist/**

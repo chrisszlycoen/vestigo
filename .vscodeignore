@@ -11,6 +11,10 @@ package-lock.json
 tsconfig.json
 .gitignore
 .vestigo/**
+vestigo.context.json
+.agents/**
+.codex/**
+.aws/**
 test-workspace/**
 .vscode-test/**
 *.log

@@ -15,6 +15,7 @@ vestigo.context.json
 .agents/**
 .codex/**
 .aws/**
+website/**
 test-workspace/**
 .vscode-test/**
 *.log

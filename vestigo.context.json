@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "exportedAt": "2026-11-03T04:44:53.316Z",
+  "revision": "b550956c1782c840c6ee5074a71bb896f8c84a39",
+  "memories": [
+    {
+      "version": 1,
+      "id": "064210f13f7d3fd2d5bf3e0d",
+      "input": {
+        "kind": "work",
+        "summary": "Implemented compact agent memory, bounded context retrieval, portable exports, and the VS Code memory sidebar.",
+        "reason": "Reuse the working agent’s knowledge without a second model call; preserve file evidence and explicit uncertainty.",
+        "files": [
+          "src/agent/server.ts",
+          "src/memory/context.ts",
+          "src/memory/store.ts",
+          "src/providers/memorySidebarProvider.ts"
+        ],
+        "verification": {
+          "status": "passed",
+          "command": "npm run lint; npm run build; npm run test:core; xvfb-run -a npm run test:extension",
+          "detail": "Memory, MCP, clone recovery and four extension checks passed. Runtime dependency audit reported no advisories."
+        },
+        "next": "Improve symbol-aware project mapping and ongoing Git/PR capture. Current retrieval is lexical and uses the first workspace folder.",
+        "visibility": "project"
+      },
+      "capturedAt": "2026-11-03T04:44:53.300Z",
+      "revision": "b550956c1782c840c6ee5074a71bb896f8c84a39",
+      "dirty": false,
+      "evidence": [
+        {
+          "path": "src/agent/server.ts",
+          "sha256": "630b1436ca5303fdd1651a6d97daca2431715e36e2d7032dd521f5ac482d0468"
+        },
+        {
+          "path": "src/memory/context.ts",
+          "sha256": "f296e074e760c2e8afc3ec648708fafc6ddc95b84c89823d9f1955957ed3426a"
+        },
+        {
+          "path": "src/memory/store.ts",
+          "sha256": "578bc17be635c982dbb84c0556c0e2abc8b547038ede33d795b7b66299461e85"
+        },
+        {
+          "path": "src/providers/memorySidebarProvider.ts",
+          "sha256": "f2e1ec9f62ce69f82e44b1b65b2f993bc334679ee5244ce9797e23aac18ff738"
+        }
+      ]
+    }
+  ]
+}

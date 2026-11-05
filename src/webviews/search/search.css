@@ -1,0 +1,19 @@
+:root {
+    --vestigo-bg: var(--vscode-editor-background);
+    --vestigo-fg: var(--vscode-foreground);
+    --vestigo-muted: var(--vscode-descriptionForeground);
+}
+
+body {
+    margin: 0;
+    padding: 12px;
+    font-family: var(--vscode-font-family);
+    font-size: var(--vscode-font-size);
+    color: var(--vestigo-fg);
+    background-color: var(--vestigo-bg);
+}
+
+.empty-state {
+    color: var(--vestigo-muted);
+    font-style: italic;
+}
